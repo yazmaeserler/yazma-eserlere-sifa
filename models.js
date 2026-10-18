@@ -1,3 +1,75 @@
+/* Gerçek eserlerden metinler (Osmanlı Türkçesi / Arapça, Arap harfli) ve bunları kâğıda yazan yardımcılar.
+   - Kitap: Süleyman Çelebi, Vesîletü'n-Necât (Mevlid), 1409 — mesnevî düzeninde iki sütun.
+   - Ferman (tomar): Kanuni Sultan Süleyman'ın Fransa Kralı I. François'ya nâme-i hümâyûnu, 1526 — divanîye yakın rik'a yazısıyla.
+   - Murakka: Şeyh Hamdullah murakkalarındaki gibi kısa hadisler — iri ve küçük satırlar.
+   - Cönk: Yunus Emre ve Hacı Bayram-ı Velî'den dörtlükler. */
+(function(){
+'use strict';
+var F={nesih:'Amiri',rika:'"Aref Ruqaa"'};
+var ready=(function(){try{if(!document.fonts||!document.fonts.load)return Promise.resolve();
+  var L=Promise.all([document.fonts.load('30px Amiri','بسم'),document.fonts.load('bold 30px Amiri','بسم'),document.fonts.load('30px "Aref Ruqaa"','بسم')]);
+  return Promise.race([L,new Promise(function(r){setTimeout(r,3500);})]);}catch(e){return Promise.resolve();}})();
+function ok(){try{return !!document.fonts&&document.fonts.check('30px Amiri','بسم');}catch(e){return false;}}
+
+/* ---- Mevlid ---- */
+var NECAT=['کر دیلرسز بوله‌سز اوددن نجات','عشق ایله درد ایله ویرڭ صلوات'];
+var MEVLID=[
+ {b:['الله آدین ذکر ایده‌لم اوّلا','واجب اولدر جمله ایشده هر قوله']},
+ {b:['الله آدین هر کیم اول اوّل آڭا','هر ایشی آسان ایده الله آڭا']},
+ {b:['الله آدی اولسه هر ایشڭ اوڭی','هرگز ابتر اولمیه آنڭ صوڭی']},
+ {b:['هر نفسده الله آدین دی مدام','الله آدیله اولور هر ایش تمام']},
+ {b:['بر کز الله دیسه عشق ایله لسان','دوکیلور آنڭ گناهی مثل خزان']},
+ {b:NECAT},
+ {h:'ولادت بحری'},
+ {b:['آمنه خاتون محمّد آنه‌سی','اول صدفدن طوغدی اول درّ دانه‌سی']},
+ {b:['طوغدی اول ساعتده اول سلطان دین','نوره غرق اولدی سماوات و زمین']},
+ {b:NECAT},
+ {h:'مرحبا بحری'},
+ {b:['مرحبا ای عالی سلطان مرحبا','مرحبا ای کان عرفان مرحبا']},
+ {b:['مرحبا ای سرّ فرقان مرحبا','مرحبا ای درده درمان مرحبا']},
+ {b:['مرحبا ای بلبل باغ جلال','مرحبا ای آشنای ذو الجلال']},
+ {b:['مرحبا ای رحمة للعالمین','مرحبا سن سن شفیع المذنبین']},
+ {b:['مرحبا ای امّته غمخوار اولان','مرحبا ای حقّه لایق یار اولان']},
+ {b:NECAT}];
+// sayfa p: ilk sayfa (serlevhalı) 11 satır, diğerleri 15 satır; metin sayfadan sayfaya kesintisiz akar
+function mevlid(p,n){var off=p===0?0:11+(p-1)*15,out=[];for(var i=0;i<n;i++)out.push(MEVLID[(off+i)%MEVLID.length]);
+  var nx=MEVLID[(off+n)%MEVLID.length];return {lines:out,next:(nx.h||nx.b[0]).split(' ')[0]};}
+
+/* ---- Ferman: Kanuni'nin nâmesi (1526) ---- */
+var NAME_ELKAB='بن که سلطان السلاطین و برهان الخواقین تاج بخش خسروان روی زمین ظل الله فی الارضین';
+var NAME=NAME_ELKAB+' آق دڭزڭ و قره دڭزڭ و روم ایلنڭ و آناطولینڭ و قرامانڭ و رومڭ و ولایت ذو القدریه‌نڭ و دیاربکرڭ و کردستانڭ و آذربایجانڭ و عجمڭ و شامڭ و حلبڭ و مصرڭ و مکّه‌نڭ و مدینه‌نڭ و قدسڭ و کلّیاً دیار عربڭ و یمنڭ و داخی نیچه ممالکڭ که آبای کرام و اجداد عظاممز انار الله براهینهم قوّت قاهره‌لریله فتح ایلدکلری و ذات شوکت سماتمز داخی تیغ آتشبار و شمشیر ظفرنگارمز ایله فتح ایلدیکمز نیچه دیارلرڭ سلطانی و پادشاهی سلطان بایزید خان اوغلی سلطان سلیم خان اوغلی سلطان سلیمان خانم'+
+ ' سن که فرانچه ولایتنڭ قرالی فرانچسقوسن درکاه سلاطین پناهمه آدمڭ فرانقپان ایله مکتوب کوندروب و بعض آغزدن خبر داخی اصمارلیوب حالا مملکتڭزه دشمن مستولی اولوب الحالة هذه حبسده اولدیغڭزی اعلام ایدوب خلاصڭز خصوصنده بو جانبدن عنایت و مدد استدعا ایلمشسز'+
+ ' هر نه که دیمش ایسه‌ڭز پایهٔ سریر جهانبانیمزه عرض اولنوب علی التفصیل علم شریفم محیط اولوب تمام معلوم اولدی امدی پادشاهلر صیمق و حبس اولنمق عجب دکلدر کوڭلڭزی خوش طوتوب آزرده خاطر اولمیه‌سز';
+var NAME_TARIH=['تحریراً فی اوائل شهر ربیع الآخر','سنه اثنتین و ثلثین و تسعمائة','بمقام دار السلطنة العلیّه قسطنطینیه'];
+
+/* ---- Murakka: hadisler ---- */
+var HADIS=['انّما الاعمال بالنیّات','الحیاء من الایمان','الکلمة الطیّبة صدقة','خیر النّاس انفعهم للنّاس','طلب العلم فریضة علی کلّ مسلم','من لا یرحم لا یرحم',
+ 'تبسّمک فی وجه اخیک صدقة','المؤمن مرآة المؤمن','الدّالّ علی الخیر کفاعله','الدّنیا مزرعة الآخرة','خیر الامور اوسطها','الجنّة تحت اقدام الامّهات'];
+
+/* ---- Cönk: dörtlükler ---- */
+var CONK=[
+ {h:'یونس امره',d:['کلڭ طانیش اوله‌لم','ایشی قولای قیله‌لم','سوه‌لم سویله‌لم','دنیا کیمسه‌یه قالماز']},
+ {h:'ایضاً له',d:['بن یوریرم یانه یانه','عشق بویادی بنی قانه','نه عاقلم نه دیوانه','کل کور بنی عشق نیلدی']},
+ {h:'ایضاً له',d:['طاغلر ایله طاشلر ایله','چاغیره‌یم مولام سنی','سحرلرده قوشلر ایله','چاغیره‌یم مولام سنی']},
+ {h:'حاجی بیرام ولی',d:['بیلمک ایسترسڭ سنی','جان ایچنده آره جان','کچ جانڭدن بول آنی','سن سنی بیل سن سنی']},
+ {h:'یونس امره',d:['بر کز کوڭل ییقدڭ ایسه','بو قیلدیغڭ نماز دکل','یتمش ایکی ملّت داخی','الڭ یوزڭ یوماز دکل']},
+ {h:'ایضاً له',d:['بن کلمدم دعوی ایچون','بنم ایشم سوکی ایچون','دوستڭ اوی کوڭللردر','کوڭللر یاپمغه کلدم']}];
+
+/* ---- yazma yardımcıları ---- */
+// Metni verilen genişliğe sığdırır; mürekkep hafifçe kâğıda yayılır (kenar bulanıklığı) ve tonu dalgalanır
+function text(x,s,cx,base,maxW,fam,size,align,col,weight){x.save();var f=(weight?weight+' ':'')+Math.round(size)+'px '+(F[fam]||fam);x.font=f;try{x.direction='rtl';}catch(e){}
+  var w=x.measureText(s).width;if(w>maxW){var k=maxW/w;if(k<.82){size*=Math.max(.7,k/.82);x.font=(weight?weight+' ':'')+Math.round(size)+'px '+(F[fam]||fam);w=x.measureText(s).width;}if(w>maxW){x.translate(cx,base);x.scale(maxW/w,1);x.translate(-cx,-base);}}
+  x.textAlign=align||'center';x.fillStyle=col;x.shadowColor=col;x.shadowBlur=size*.03;x.fillText(s,cx,base);x.restore();return w;}
+// Satırı kelime kelime yazar; divanîdeki gibi satır sonuna (sola) doğru yükselir
+function rising(x,words,R,L,base,size,col,rise,fam){x.save();x.font=Math.round(size)+'px '+(F[fam||'rika']);try{x.direction='rtl';}catch(e){}x.textAlign='right';x.fillStyle=col;x.shadowColor=col;x.shadowBlur=.6;
+  var px=R,sp=size*.32;words.forEach(function(wd){var w=x.measureText(wd).width,t=Math.max(0,(R-px)/(R-L)),y=base-Math.pow(t,2.2)*rise;x.fillText(wd,px,y);px-=w+sp;});x.restore();}
+// Kelimeleri genişliğe göre satırlara böler
+function wrap(x,s,maxW,size,fam){x.save();x.font=Math.round(size)+'px '+(F[fam]||fam);var ws=s.split(' '),out=[],cur=[];var sp=size*.32,cw=0;
+  ws.forEach(function(w){var ww=x.measureText(w).width;if(cur.length&&cw+ww>maxW){out.push(cur);cur=[];cw=0;}cur.push(w);cw+=ww+sp;});if(cur.length)out.push(cur);x.restore();return out;}
+
+window.METIN={ready:ready,ok:ok,F:F,mevlid:mevlid,NAME:NAME,NAME_ELKAB:NAME_ELKAB,NAME_TARIH:NAME_TARIH,HADIS:HADIS,CONK:CONK,text:text,rising:rising,wrap:wrap};
+})();
+
 /* Tezhip: serlevha (unvan, tepelik, tığ). Ezme altın, lâciverd, lâl, gülkurusu, yeşil ve üstübeç; siyah tahrir.
    Aynı çizim üç kez yapılır: renk, metal (altın maskesi) ve kabartı haritası. Birim çerçeve: unvan 580 × 180. */
 (function(){
@@ -129,7 +201,10 @@ function draw(c,mode,o){var r=rng(o.seed||7),pats={},INK='rgba(26,18,10,.92)';
   // KİTABE: dilimli lâciverd madalyon, üstübeçle (beyaz) yazı
   fill(kit,'lapis');LAP.push([kit]);
   c.save();c.clip(kit);var sm=new Path2D();for(var q=0;q<30;q++){var fx=180+r()*220,fy=52+r()*76,P=pencPath(fx,fy,2.4,5,r()*6,.55);sm.addPath(P);}fill(sm,'gold');
-  if(mode==='color'){c.globalAlpha=.9;var txt=script(190,392,107,50,(o.seed||7)+3,false,true);c.lineWidth=1.6;c.strokeStyle=INK;c.stroke(txt);c.fillStyle=F('white');c.fill(txt);c.globalAlpha=1;}
+  var MTk=window.METIN&&window.METIN.ok();
+  if(MTk){c.save();c.font='bold 40px Amiri';try{c.direction='rtl';}catch(e){}c.textAlign='center';var bw=c.measureText('بسم الله الرحمن الرحیم').width,bk=Math.min(1,196/bw);c.translate(290,103);c.scale(bk,1);
+    if(mode==='color'){c.lineWidth=2.4;c.strokeStyle=INK;c.lineJoin='round';c.strokeText('بسم الله الرحمن الرحیم',0,0);c.fillStyle=F('white');c.fillText('بسم الله الرحمن الرحیم',0,0);}else{c.fillStyle=mode==='metal'?'#000':'#c0c0c0';c.fillText('بسم الله الرحمن الرحیم',0,0);}c.restore();}
+  else if(mode==='color'){c.globalAlpha=.9;var txt=script(190,392,107,50,(o.seed||7)+3,false,true);c.lineWidth=1.6;c.strokeStyle=INK;c.stroke(txt);c.fillStyle=F('white');c.fill(txt);c.globalAlpha=1;}
   else{var txt2=script(190,392,107,50,(o.seed||7)+3,false,true);c.fillStyle=mode==='metal'?'#000':'#c0c0c0';c.fill(txt2);}
   c.restore();
   var kin=lobed(290,90,111,41,18,.035,.16);goldLine(kit,3);ink(kit,.8);goldLine(kin,.9);
@@ -404,6 +479,19 @@ function page(opts){opts=opts||{};var key=JSON.stringify(opts);if(_pageCache[key
   var top=T+40,SP=null;
   if(opts.serlevha&&TZ){SP=TZ.panel(R-L,{seed:opts.seed||5,sheen:.2});c.drawImage(SP.C,L-SP.ox,T-SP.oy);top=T+SP.k*180+52;}
   // satırlar: mürekkep tonu, rubrik ve durak gülleri sayfadan sayfaya değişir
+  var MT=window.METIN;
+  if(MT&&MT.ok()){ // Süleyman Çelebi, Mevlid: mesnevî düzeni, iki sütun; bölüm başlıkları kırmızı
+    var lines=opts.serlevha?11:15,lh=(Bm-top-20)/(lines-1),ink=['28,20,16','22,18,16','40,26,18','30,22,20'][Math.floor(r()*4)],inkA=.82+r()*.14,pg=MT.mevlid(opts.p||0,lines),colW=(R-L-56)/2,fs=Math.min(36,lh*.6),mid=(L+R)/2;
+    // sütunlar arası çift kırmızı cetvel
+    c.strokeStyle='rgba(155,45,32,.75)';c.lineWidth=1.2;[mid-4,mid+4].forEach(function(xx){c.beginPath();c.moveTo(xx,top-lh*.8);c.lineTo(xx,Bm-6);c.stroke();});
+    pg.lines.forEach(function(it,ln){var base=top+ln*lh+(r()-.5)*2;
+      if(it.h){c.fillStyle='rgba(238,224,189,.96)';c.fillRect(mid-8,base-lh*.75,16,lh*.9);MT.text(c,it.h,mid,base,R-L-220,'nesih',fs*1.06,'center','rgba(162,38,26,.95)','bold');_rosette(c,mid-170,base-fs*.3,8);_rosette(c,mid+170,base-fs*.3,8);}
+      else{var col='rgba('+ink+','+(inkA+(r()-.5)*.08).toFixed(2)+')';MT.text(c,it.b[0],R-26-colW/2,base,colW-34,'nesih',fs*.94,'center',col);MT.text(c,it.b[1],L+26+colW/2,base,colW-34,'nesih',fs*.94,'center',col);}});
+    // derkenar: kenarda düzeltme ve "sahh" işareti
+    if(r()<.6){var dy=top+lh*(2+Math.floor(r()*(lines-4)));c.save();c.translate(V?92:W-92,dy);c.rotate(V?.7:-.7);var dl=pg.lines[Math.floor(r()*lines)];MT.text(c,dl.b?dl.b[r()<.5?0:1].split(' ').slice(0,3).join(' '):dl.h,0,0,150,'nesih',22,'center','rgba(58,42,30,.85)');MT.text(c,'صحّ',0,30,60,'nesih',20,'center','rgba(58,42,30,.85)');c.restore();}
+    // reklam: arka yüzde, bir sonraki sayfanın ilk kelimesi
+    if(V){c.save();c.translate(L+70,Bm+62);c.rotate(-.22);MT.text(c,pg.next,0,0,140,'nesih',28,'center','rgba('+ink+',.9)');c.restore();}
+  }else{
   var lines=opts.serlevha?11:15,lh=(Bm-top-20)/(lines-1),ink=['28,20,16','22,18,16','40,26,18','30,22,20'][Math.floor(r()*4)],inkA=.78+r()*.17,pRed=.05+r()*.12,pRos=.02+r()*.09,pRedLine=.1+r()*.2;
   for(var ln=0;ln<lines;ln++){var base=top+ln*lh+(r()-.5)*3,px=R-12-r()*6,first=true;
     while(px>L+40){var len=Math.min(px-L-12,40+r()*110),red=first?r()<pRedLine:r()<pRed*.3;
@@ -415,6 +503,7 @@ function page(opts){opts=opts||{};var key=JSON.stringify(opts);if(_pageCache[key
     c.save();c.translate(dx,dy);c.rotate(ang);for(i=0;i<nl;i++){var ll=150-i*12-r()*30;c.fillStyle='rgba(58,42,30,'+(.7+r()*.2)+')';if(TZ)c.fill(TZ.script(-ll/2,ll/2,i*24,15,Math.floor(r()*99999)+1,true));else _word(c,ll/2,i*24,ll,r,'#3A2A1E');}c.restore();}
   // reklam: arka yüzde, son satırın altında bir sonraki sayfanın ilk kelimesi
   if(V){c.save();c.translate(L+70,Bm+62);c.rotate(-.22);c.fillStyle='rgba('+ink+',.9)';if(TZ)c.fill(TZ.script(-40,40,0,24,Math.floor(r()*99999)+1,true));c.restore();}
+  }
   // kurt delikleri: kenarlı küçük boşluklar
   if(r()<.25){var hx=200+r()*(W-400),hy=200+r()*(H-400),nh=1+Math.floor(r()*4);for(i=0;i<nh;i++){var hr=3+r()*5,hxx=hx+(r()-.5)*60,hyy=hy+(r()-.5)*60;c.fillStyle='rgba(95,65,35,.75)';c.beginPath();c.ellipse(hxx,hyy,hr+1.6,hr*.85+1.6,r()*3,0,7);c.fill();c.fillStyle='#CDBB94';c.beginPath();c.ellipse(hxx,hyy,hr,hr*.85,r()*3,0,7);c.fill();}}
   var t=_tx(C);
@@ -422,7 +511,7 @@ function page(opts){opts=opts||{};var key=JSON.stringify(opts);if(_pageCache[key
   if(V){t.repeat.set(-1,1);t.offset.set(1,0);}
   _pageCache[key]=t;return t;}
 // Sayfa malzemesi: kâğıt pürüzü, altın cetvel ve tezhip ışıkta parlar
-function pageMat(t,o){o=o||{};var u=t.userData||{};return new THREE.MeshStandardMaterial({map:t,bumpMap:u.bump||null,bumpScale:.035,metalnessMap:u.metal||null,metalness:u.metal?.45:0,roughnessMap:u.rough||null,roughness:u.rough?1:.95,
+function pageMat(t,o){o=o||{};var u=t.userData||{};return new THREE.MeshStandardMaterial({polygonOffset:o.po!=null,polygonOffsetFactor:o.po||0,polygonOffsetUnits:(o.po||0)*2,map:t,bumpMap:u.bump||null,bumpScale:.035,metalnessMap:u.metal||null,metalness:u.metal?.45:0,roughnessMap:u.rough||null,roughness:u.rough?1:.95,
   emissiveMap:u.metal||null,emissive:u.metal?new THREE.Color(.26,.19,.08):new THREE.Color(0,0,0),side:o.side||THREE.FrontSide});}
 /* Sayfa kenarları: tek tek kâğıt katmanları, hafif toz */
 function edges(){var W=512,H=512,C=_cv(W,H),c=C.getContext('2d'),r=_rng(17);c.fillStyle='#E6D7B2';c.fillRect(0,0,W,H);
@@ -441,7 +530,7 @@ function siraze(){var W=128,H=512,C=_cv(W,H),c=C.getContext('2d'),cols=['#9B2D20
 window.__TX={leather:function(o){return leather(o).image;}};
 
 // Sahneler görünüme yaklaşınca kurulur: açılış hızlanır, bellek yalnızca gerekince harcanır
-function whenNear(id,fn){var el=document.getElementById(id);if(!el)return;if(!('IntersectionObserver' in window)){fn();return;}var done=false,io=new IntersectionObserver(function(es){if(done)return;for(var i=0;i<es.length;i++)if(es[i].isIntersecting){done=true;io.disconnect();fn();return;}},{rootMargin:'700px 0px'});io.observe(el);}
+function whenNear(id,fn0){var el=document.getElementById(id);if(!el)return;var fn=function(){(window.METIN?window.METIN.ready:Promise.resolve()).then(fn0,fn0);};if(!('IntersectionObserver' in window)){fn();return;}var done=false,io=new IntersectionObserver(function(es){if(done)return;for(var i=0;i<es.length;i++)if(es[i].isIntersecting){done=true;io.disconnect();fn();return;}},{rootMargin:'700px 0px'});io.observe(el);}
 
 /* ---------- Ferman, murakka, muhafaza kutusu: gerçekçi dokular ---------- */
 function _pat(x,k){return window.Tezhip?Tezhip.pattern(x,k):'#EEE0BD';}
@@ -468,6 +557,16 @@ function fermanTex(){if(_fermanT)return _fermanT;var DL=3072,DW=936,C=_cv(DL,DW)
     x.strokeStyle='rgba(120,90,50,'+(.08+r()*.1)+')';x.lineWidth=1.4;x.stroke();x.save();x.translate(0,2);x.strokeStyle='rgba(255,250,235,.25)';x.stroke();x.restore();b.strokeStyle='rgba(90,90,90,.7)';b.lineWidth=1.2;b.stroke();}
   _spots(x,0,0,DW,DL,40,r,.38);
   if(TZ){
+    var MT=window.METIN;
+    if(MT&&MT.ok()){ // Kanuni'nin I. François'ya nâmesi (1526): satırlar sola doğru yükselir, unvan altınla, satır aralarında altın benekler
+      var y0=760,lh=80,L=110,R=DW-90,fz=38,lines=MT.wrap(x,MT.NAME,R-L-40,fz,'rika'),nEl=MT.NAME_ELKAB.split(' ').length,cnt=0;
+      lines.forEach(function(ws,ln){var base=y0+ln*lh;
+        var gold=ws.slice(0,Math.max(0,nEl-cnt)),rest=ws.slice(Math.max(0,nEl-cnt));cnt+=ws.length;
+        if(gold.length){MT.rising(x,gold,R,L,base,fz,_pat(x,'gold'),26);x.save();x.globalAlpha=.55;MT.rising(x,gold,R+1,L,base+1,fz,'rgba(90,60,20,.6)',26);x.restore();}
+        if(rest.length){x.save();x.font=fz+'px '+MT.F.rika;var gw=0;gold.forEach(function(g){gw+=x.measureText(g).width+fz*.32;});x.restore();MT.rising(x,rest,R-gw,L-gw*0,base,fz,'rgba(26,20,16,.92)',26);}
+        if(ln%2===0)for(var gd=0;gd<4;gd++){x.fillStyle=_pat(x,'gold');x.beginPath();x.arc(L+40+r()*(R-L-80),base+36+r()*8,4+r()*2.5,0,7);x.fill();}});
+      var yt=y0+lines.length*lh+60;MT.NAME_TARIH.forEach(function(t,i){MT.text(x,t,L+260-i*30,yt+i*58,420,'rika',32,'center','rgba(26,20,16,.9)');});
+    }else{
     // metin: divanî satırlar sola doğru yükselir; ilk satır altınla
     var y0=730,lh=64,L=110,R=DW-90;for(var ln=0;y0+ln*lh<DL-260;ln++){var base=y0+ln*lh,px=R-r()*10;
       while(px>L+30){var w=Math.min(px-L,40+r()*90),rise=Math.pow(Math.max(0,(L+240-px)/240),2)*34,p=TZ.script(px-w,px,base-rise,28,Math.floor(r()*99999)+1,true);
@@ -476,6 +575,7 @@ function fermanTex(){if(_fermanT)return _fermanT;var DL=3072,DW=936,C=_cv(DL,DW)
       if(ln%2===0)for(var gd=0;gd<4;gd++){x.fillStyle=_pat(x,'gold');x.beginPath();x.arc(L+40+r()*(R-L-80),base+30+r()*8,4+r()*2.5,0,7);x.fill();}}
     // tarih ve yer (sonda, sola kaymış iki kısa satır)
     for(i=0;i<2;i++){x.fillStyle='rgba(26,20,16,.88)';x.fill(TZ.script(L+20,L+260-i*60,DL-170+i*52,24,401+i,true));}
+    }
     // altın serpme (zerefşan)
   }
   // kenar çentikleri ve küçük kayıplar
@@ -514,8 +614,9 @@ function kitaTex(seed){var w=720,h=1040,C=_cv(w,h),x=C.getContext('2d'),r=_rng(5
   var KX=114,KY=114,KW=w-228,KH=h-228;x.fillStyle=_pat(x,'paper');x.fillRect(KX,KY,KW,KH);x.fillStyle='rgba(245,236,212,.35)';x.fillRect(KX,KY,KW,KH);
   var g=x.createRadialGradient(w/2,h/2,120,w/2,h/2,520);g.addColorStop(0,'rgba(160,110,50,0)');g.addColorStop(1,'rgba(150,100,45,.25)');x.fillStyle=g;x.fillRect(KX,KY,KW,KH);
   if(TZ){
-    // üstte tek sülüs satır (iki ince altın çizgi arasında)
-    x.fillStyle='rgba(22,16,12,.95)';x.fill(TZ.script(KX+30,KX+KW-30,KY+150,92,700+seed*11,false,true));
+    // üstte tek iri satır (iki ince altın çizgi arasında): bir hadis
+    var MT=window.METIN,HD=MT&&MT.ok()?MT.HADIS:null,hi=(seed*5)%12;
+    if(HD)MT.text(x,HD[hi],w/2,KY+170,KW-60,'nesih',96,'center','rgba(22,16,12,.95)','bold');else{x.fillStyle='rgba(22,16,12,.95)';x.fill(TZ.script(KX+30,KX+KW-30,KY+150,92,700+seed*11,false,true));}
     x.strokeStyle=_pat(x,'gold');x.lineWidth=2;x.beginPath();x.moveTo(KX+12,KY+214);x.lineTo(KX+KW-12,KY+214);x.stroke();
     // verev satırlar
     var oy=KY+250,oh=KH-370;x.save();x.beginPath();x.rect(KX+8,oy,KW-16,oh);x.clip();
@@ -523,9 +624,9 @@ function kitaTex(seed){var w=720,h=1040,C=_cv(w,h),x=C.getContext('2d'),r=_rng(5
     var M=TZ.motif;[[KX+8,oy,1,1],[KX+KW-8,oy+oh,-1,-1]].forEach(function(k){var tri=new Path2D();tri.moveTo(k[0],k[1]);tri.lineTo(k[0]+k[2]*KW*.42,k[1]);tri.lineTo(k[0],k[1]+k[3]*oh*.48);tri.closePath();x.fillStyle=_pat(x,'gold');x.fill(tri);
       x.save();x.clip(tri);x.strokeStyle='rgba(26,18,10,.75)';x.lineWidth=.7;for(var q=0;q<12;q++){var cx=k[0]+k[2]*r()*KW*.4,cy=k[1]+k[3]*r()*oh*.4,R=9+r()*5,a0=r()*6;x.beginPath();for(var j=0;j<=26;j++){var th=a0+j/26*Math.PI*2,rr=R*(1-j/32);x.lineTo(cx+Math.cos(th)*rr,cy+Math.sin(th)*rr);}x.stroke();var pp=M.penc(cx,cy,3.8,5,r()*6,.5);x.fillStyle=_pat(x,['red','lapis','white'][q%3]);x.fill(pp);x.stroke(pp);}x.restore();
       x.strokeStyle='rgba(26,18,10,.85)';x.lineWidth=1;x.stroke(tri);});
-    x.translate(w/2,oy+oh/2);x.rotate(-.42);for(var l=0;l<5;l++){var yy=-124+l*62,half=250-Math.abs(l-2)*18,px=half;while(px>-half+20){var ww=Math.min(px+half,50+r()*80),pw=TZ.script(px-ww,px,yy,30,Math.floor(r()*99999)+1,true);x.fillStyle='rgba(24,18,14,.92)';x.fill(pw);px=pw.left-10-r()*8;}}x.restore();
+    x.translate(w/2,oy+oh/2);x.rotate(-.42);for(var l=0;l<5;l++){var yy=-124+l*62,half=250-Math.abs(l-2)*18;if(HD)MT.text(x,HD[(hi+1+l)%12],0,yy,half*(l===0||l===4?1.15:1.45),'nesih',36,'center','rgba(24,18,14,.92)');else{var px=half;while(px>-half+20){var ww=Math.min(px+half,50+r()*80),pw=TZ.script(px-ww,px,yy,30,Math.floor(r()*99999)+1,true);x.fillStyle='rgba(24,18,14,.92)';x.fill(pw);px=pw.left-10-r()*8;}}}x.restore();
     // ketebe: hattatın imzası, küçük çerçevede
-    x.fillStyle='rgba(155,45,32,.08)';x.fillRect(KX+30,KY+KH-92,170,52);x.strokeStyle=_pat(x,'gold');x.lineWidth=1.5;x.strokeRect(KX+30,KY+KH-92,170,52);x.fillStyle='rgba(24,18,14,.9)';x.fill(TZ.script(KX+40,KX+190,KY+KH-58,20,900+seed,true,true));}
+    x.fillStyle='rgba(155,45,32,.08)';x.fillRect(KX+30,KY+KH-92,170,52);x.strokeStyle=_pat(x,'gold');x.lineWidth=1.5;x.strokeRect(KX+30,KY+KH-92,170,52);if(HD)MT.text(x,'صدق رسول الله',KX+115,KY+KH-56,140,'nesih',26,'center','rgba(24,18,14,.9)');else{x.fillStyle='rgba(24,18,14,.9)';x.fill(TZ.script(KX+40,KX+190,KY+KH-58,20,900+seed,true,true));}}
   _spots(x,0,0,w,h,10+Math.floor(r()*20),r,.35);
   // köşelerde aşınma
   [[0,0],[w,0],[0,h],[w,h]].forEach(function(k){var cg=x.createRadialGradient(k[0],k[1],0,k[0],k[1],90);cg.addColorStop(0,'rgba(120,85,50,.35)');cg.addColorStop(1,'rgba(120,85,50,0)');x.fillStyle=cg;x.fillRect(k[0]-90,k[1]-90,180,180);});
@@ -598,7 +699,7 @@ function Viewer(id,opts){
   var r;try{r=new THREE.WebGLRenderer({antialias:true,alpha:true});}catch(e){fallback(id,'Bu tarayıcıda 3D (WebGL) desteklenmiyor.');return;}
   r.setPixelRatio(Math.min(_LOW?1.5:2,window.devicePixelRatio||1));if(THREE.sRGBEncoding)r.outputEncoding=THREE.sRGBEncoding;r.shadowMap.enabled=true;r.shadowMap.type=THREE.PCFSoftShadowMap;
   host.insertBefore(r.domElement,host.firstChild);
-  var scene=new THREE.Scene(),cam=new THREE.PerspectiveCamera(opts.fov||35,1,.1,500);
+  var scene=new THREE.Scene(),cam=new THREE.PerspectiveCamera(opts.fov||35,1,1.5,500);
   scene.add(new THREE.HemisphereLight(0xfff8ec,0x2a3a34,.75));
   var key=new THREE.DirectionalLight(0xffffff,.95);key.position.set(18,30,22);key.castShadow=true;key.shadow.mapSize.set(_LOW?1024:2048,_LOW?1024:2048);key.shadow.normalBias=.03;var sc=key.shadow.camera;sc.left=-30;sc.right=30;sc.top=30;sc.bottom=-30;sc.far=120;key.shadow.bias=-.0002;scene.add(key);
   var fillL=new THREE.DirectionalLight(0xdfe8ff,.35);fillL.position.set(-20,12,-10);scene.add(fillL);
@@ -681,7 +782,7 @@ Viewer.prototype.pick=function(objs,fn){this.picks.push({objs:objs,fn:fn});};
 function buildBook(V){
   var W=14,Dp=20,T=3,c=.28,g=new THREE.Group();V.pivot.add(g);g.position.set(-1,0,0);
   var leatherM=leatherMat(leather()),leatherPlain=leatherMat(leather({plain:true}),{bump:.2}),
-      ebruM=new THREE.MeshStandardMaterial({map:ebru({doublure:true}),roughness:.9}),pageTex=page({seed:99}),pageM=pageMat(pageTex),
+      ebruM=new THREE.MeshStandardMaterial({map:ebru({doublure:true}),roughness:.9}),pageTex=page({seed:99,p:2*5}),pageM=pageMat(pageTex,{po:6}),
       edgeM=new THREE.MeshStandardMaterial({map:edges(),roughness:.95}),mikM=leatherMat(leather({half:true,zencerek:false})),frontM=leatherMat(leather({semse:false}));
   function box(w,h,d,m){var x=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),m);x.castShadow=true;x.receiveShadow=true;return x;}
   var back=box(W,c,Dp,[leatherPlain,leatherPlain,ebruM,leatherM,leatherPlain,leatherPlain]);back.position.set(0,c/2,0);g.add(back);
@@ -706,9 +807,9 @@ function buildBook(V){
   for(var k=0;k<NP;k++){var geo=new THREE.BufferGeometry(),vp=new Float32Array((SEG+1)*2*3),vu=new Float32Array((SEG+1)*2*2),idx=[];
     for(var j=0;j<=SEG;j++){vu[(j*2)*2]=j/SEG;vu[(j*2)*2+1]=1;vu[(j*2+1)*2]=j/SEG;vu[(j*2+1)*2+1]=0;if(j<SEG){var a=j*2;idx.push(a,a+1,a+2,a+1,a+3,a+2);}}
     geo.setAttribute('position',new THREE.BufferAttribute(vp,3));geo.setAttribute('uv',new THREE.BufferAttribute(vu,2));geo.setIndex(idx);
-    var m=new THREE.Mesh(geo,pageMat(page(k===NP-1?{serlevha:true,seed:7}:{seed:100+k*2})));m.castShadow=true;m.add(new THREE.Mesh(geo,pageMat(page({seed:101+k*2,verso:true}),{side:THREE.BackSide})));var y0=c+T+.012+k*.006;m.position.set(-W/2+.25,y0,0);g.add(m);
+    var m=new THREE.Mesh(geo,pageMat(page(k===NP-1?{serlevha:true,seed:7,p:0}:{seed:100+k*2,p:2*(NP-1-k)}),{po:(NP-1-k)}));m.castShadow=true;m.add(new THREE.Mesh(geo,pageMat(page({seed:101+k*2,verso:true,p:2*(NP-1-k)+1}),{side:THREE.BackSide,po:k})));var y0=c+T+.014+k*.012;m.position.set(-W/2+.25,y0,0);g.add(m);
     var hi=Math.PI-.03-(NP-k)*.006;
-    pages.push({m:m,geo:geo,y0:y0,h:new Hinge({a:0,lo:0,hi:hi,G:9,f:.9,e:.18,K:34,C:10})});}
+    pages.push({m:m,geo:geo,y0:y0,k:k,h:new Hinge({a:0,lo:0,hi:hi,G:9,f:.9,e:.18,K:34,C:10})});}
   function shapePage(p){var a=p.h.a,w=p.h.w,arr=p.geo.attributes.position.array,x=0,y=0,ds=pw/SEG;
     // hava direnci: hareket eden yaprağın ucu geride kalır; kâğıt kendi ağırlığıyla dikeye yakınken sarkar
     var bend=Math.max(-1.2,Math.min(1.2,-w*.2)),sag=.35*Math.max(0,Math.sin(a))*Math.cos(a);
@@ -716,7 +817,8 @@ function buildBook(V){
       arr[(j*2)*3]=x;arr[(j*2)*3+1]=y;arr[(j*2)*3+2]=-pd/2;arr[(j*2+1)*3]=x;arr[(j*2+1)*3+1]=y;arr[(j*2+1)*3+2]=pd/2;
       x+=Math.cos(ang)*ds;y+=Math.sin(ang)*ds;if(a<.02&&y<0)y=0;}
     p.geo.attributes.position.needsUpdate=true;p.geo.computeVertexNormals();p.geo.computeBoundingSphere();
-    p.m.position.y=p.y0+c*Math.min(1,Math.max(0,(a-1.3)/1.4));}
+    // çevrilen yapraklar sol yığında ters sırayla durur: yükseklik sırası da tersine döner, yapraklar sırt yanında birbirinin içinden geçmez
+    var sf=Math.min(1,Math.max(0,(a-1.3)/1.4));sf=sf*sf*(3-2*sf);p.m.position.y=p.y0-p.k*.012+((1-sf)*p.k+sf*(pages.length-1-p.k))*.012+c*sf;}
   pages.forEach(shapePage);
   // Menteşeler
   var cover=new THREE.Group();
@@ -819,9 +921,11 @@ function buildBook(V){
 }
 
 /* Ana sayfa: tam genişlikte, elle çevrilen kitap (kendi kendine oynamaz) */
-(function(){var V=new Viewer('hero3d',{pitch:30*D2R,yaw:-18*D2R,target:new THREE.Vector3(-1,2.5,0),auto:false,fitR:22,
+whenNear('hero3d',function(){var V=new Viewer('hero3d',{pitch:30*D2R,yaw:-18*D2R,target:new THREE.Vector3(-1,2.5,0),auto:false,fitR:22,
     shift:function(w){return w>980?.25:0;}});if(!V.ok)return;var b=buildBook(V);b.setOpen();
-  V.grabbers.push(b.grab);V.hover=b.hover;window.__hero={b:b,V:V};})();
+  V.grabbers.push(b.grab);V.hover=b.hover;// pencereden gelen huzmenin kitaba düşen sıcak ışığı (2B huzmeyle aynı yönden)
+  var beamL=new THREE.SpotLight(0xffe0ae,.85,0,.3,.75,1);beamL.position.set(-5,46,-22);beamL.target.position.set(-.5,2,1.5);beamL.castShadow=true;beamL.shadow.mapSize.set(_LOW?512:1024,_LOW?512:1024);beamL.shadow.bias=-.0004;beamL.shadow.camera.near=20;beamL.shadow.camera.far=90;V.scene.add(beamL);V.scene.add(beamL.target);
+  window.__hero={b:b,V:V};});
 
 /* Anatomi: parçalar, durumlar, sayfa çevirme */
 whenNear('book3d',function(){var V=new Viewer('book3d',{pitch:34*D2R,yaw:-28*D2R,target:new THREE.Vector3(-1,2,0),auto:false,fitR:23});if(!V.ok)return;var b=buildBook(V);V.grabbers.push(b.grab);V.hover=b.hover;window.__ana={b:b,V:V};
@@ -1260,6 +1364,9 @@ whenNear('conk3d',function(){var host=document.getElementById('conk3d');if(!host
       pT=conkPage(1),pM=new THREE.MeshStandardMaterial({map:pT,roughness:.95,side:THREE.DoubleSide});
   function conkPage(sd){var r=_rng(900+sd*31);return canvasTex(512,1440,function(x,w,h){x.fillStyle=_pat(x,'paper');x.fillRect(0,0,w,h);x.fillStyle='rgba(225,205,160,.25)';x.fillRect(0,0,w,h);_blot(x,w,h,20,['rgba(190,150,95,A)','rgba(245,235,210,A)'],30,160,.22,r);_spots(x,0,0,w,h,6+Math.floor(r()*20),r);
     x.strokeStyle='rgba(155,45,32,.85)';x.lineWidth=2;x.strokeRect(36,44,w-72,h-88);var y=110,TZ=window.Tezhip;
+    var MT=window.METIN;if(MT&&MT.ok()){var q=(sd*2)%MT.CONK.length; // Yunus Emre ve Hacı Bayram-ı Velî dörtlükleri
+      while(y<h-260){var P=MT.CONK[q%MT.CONK.length];q++;MT.text(x,P.h,w/2,y,w-200,'nesih',30,'center','rgba(155,38,26,.92)','bold');y+=56;
+        P.d.forEach(function(d){MT.text(x,d,w-70,y,w-150,'nesih',30,'right','rgba(28,20,16,'+(.84+r()*.1).toFixed(2)+')');y+=46;});y+=40;}return;}
     while(y<h-120){if(TZ){x.fillStyle='rgba(155,38,26,.9)';x.fill(TZ.script(150,w-150,y,24,Math.floor(r()*99999)+1,true,true));}y+=48;for(var k=0;k<4&&y<h-90;k++){var px=w-64;while(px>90&&TZ){var ww=Math.min(px-64,40+r()*80),p=TZ.script(px-ww,px,y,22,Math.floor(r()*99999)+1,true);x.fillStyle='rgba(28,20,16,'+(.82+r()*.12)+')';x.fill(p);px=p.left-10-r()*10;}y+=40;}y+=34;}});}
   var back=new THREE.Mesh(new THREE.BoxGeometry(BW,c,BL),lM);back.position.y=c/2;back.castShadow=back.receiveShadow=true;g.add(back);
   var block=new THREE.Mesh(new THREE.BoxGeometry(BW-.3,T,BL-.4),[edgeM2,edgeM2,new THREE.MeshStandardMaterial({map:pT,roughness:.95}),edgeM2,edgeM2,edgeM2]);block.position.set(0,c+T/2,.1);block.castShadow=true;g.add(block);
@@ -1270,11 +1377,11 @@ whenNear('conk3d',function(){var host=document.getElementById('conk3d');if(!host
   for(var k=0;k<NP;k++){var geo=new THREE.BufferGeometry(),vp=new Float32Array((SEG+1)*6),vu=new Float32Array((SEG+1)*4),idx=[];
     for(var j=0;j<=SEG;j++){vu[j*4]=0;vu[j*4+1]=1-j/SEG;vu[j*4+2]=1;vu[j*4+3]=1-j/SEG;if(j<SEG){var a=j*2;idx.push(a,a+2,a+1,a+1,a+2,a+3);}}
     geo.setAttribute('position',new THREE.BufferAttribute(vp,3));geo.setAttribute('uv',new THREE.BufferAttribute(vu,2));geo.setIndex(idx);
-    var m=new THREE.Mesh(geo,k===NP-1?pM:new THREE.MeshStandardMaterial({map:conkPage(k+2),roughness:.95,side:THREE.DoubleSide}));m.castShadow=true;var y0=c+T+.012+k*.006;m.position.set(0,y0,ZH+.2);g.add(m);
-    pages.push({m:m,geo:geo,y0:y0,h:new Hinge({a:0,lo:0,hi:Math.PI-.03-(NP-k)*.006,G:9,f:.9,e:.18,K:34,C:10})});}
+    var m=new THREE.Mesh(geo,k===NP-1?pM:new THREE.MeshStandardMaterial({map:conkPage(k+2),roughness:.95,side:THREE.DoubleSide}));m.castShadow=true;var y0=c+T+.014+k*.012;m.position.set(0,y0,ZH+.2);g.add(m);
+    pages.push({m:m,geo:geo,y0:y0,k:k,h:new Hinge({a:0,lo:0,hi:Math.PI-.03-(NP-k)*.006,G:9,f:.9,e:.18,K:34,C:10})});}
   function shape(p){var a=p.h.a,w=p.h.w,arr=p.geo.attributes.position.array,y=0,z=0,ds=pl/SEG,bend=Math.max(-1.2,Math.min(1.2,-w*.2)),sag=.35*Math.max(0,Math.sin(a))*Math.cos(a);
     for(var j=0;j<=SEG;j++){var s=j/SEG,an=a+bend*Math.pow(s,1.5)-sag*s*s;arr[j*6]=-pw/2;arr[j*6+1]=y;arr[j*6+2]=z;arr[j*6+3]=pw/2;arr[j*6+4]=y;arr[j*6+5]=z;y+=Math.sin(an)*ds;z+=Math.cos(an)*ds;if(a<.02&&y<0)y=0;}
-    p.geo.attributes.position.needsUpdate=true;p.geo.computeVertexNormals();p.geo.computeBoundingSphere();p.m.position.y=p.y0+c*Math.min(1,Math.max(0,(a-1.3)/1.4));}
+    p.geo.attributes.position.needsUpdate=true;p.geo.computeVertexNormals();p.geo.computeBoundingSphere();var sf=Math.min(1,Math.max(0,(a-1.3)/1.4));sf=sf*sf*(3-2*sf);p.m.position.y=p.y0-p.k*.012+((1-sf)*p.k+sf*(pages.length-1-p.k))*.012+c*sf;}
   var hc=new Hinge({a:0,lo:0,hi:Math.PI-.005,G:9,f:.55,e:.28,K:110,C:15}),held=null;
   var chain=pages.map(function(p){return {h:p.h,m:1};}).concat([{h:hc,m:4}]);
   V.updaters.push(function(dt){hc.step(dt);pages.forEach(function(p){p.h.step(dt);});

@@ -345,36 +345,58 @@ $$('video').forEach(function(v){if(reduce){v.removeAttribute('autoplay');v.contr
    var fg2=mk('path',{d:d,fill:'none',stroke:'#FBF3DD','stroke-width':'.8','stroke-dasharray':'2 3','stroke-opacity':'.9',transform:'translate(1.6,0)'});tr.parentNode.insertBefore(fg2,tr.nextSibling);}
  $$('.boxbase rect, .lid > rect',svg).forEach(function(rc,k){if(rc.getAttribute('fill')!=='none'&&rc.getAttribute('fill')!=='#F6F4EF')rc.setAttribute('fill','url(#greyP)');});
 })();
-/* ---------- Giriş: pencereden süzülen ışık huzmesi ve içinde ağır ağır uçuşan toz ---------- */
+/* ---------- Giriş: pencereden süzülen ışık huzmesi ve içinde uçuşan toz ----------
+   Huzme piksel piksel hesaplanır: pencere kenarlarının yumuşak gölgesi (penumbra), orta kayıtın gölgesi, havadaki tozun
+   oluşturduğu boyuna ışık şeritleri ve yavaşça değişen yoğunluk. Toz zerreleri hava akımıyla süzülür, yalnızca ışığın
+   içinde görünür; odak dışındakiler bulanık, döndükçe ışığı yakalayan pullar parıldar. */
 (function(){var st=$('#hero3d');if(!st)return;var cv=document.createElement('canvas');cv.className='beam';cv.setAttribute('aria-hidden','true');st.appendChild(cv);
- var x=cv.getContext('2d'),W=0,H=0,beam=null,P=[],geo=null,vis=true,raf=0,last=0,sp=null,mob=false;
- function sprite(){var s=document.createElement('canvas');s.width=s.height=32;var c=s.getContext('2d'),g=c.createRadialGradient(16,16,0,16,16,16);g.addColorStop(0,'rgba(255,244,214,1)');g.addColorStop(.35,'rgba(255,236,196,.55)');g.addColorStop(1,'rgba(255,230,190,0)');c.fillStyle=g;c.fillRect(0,0,32,32);return s;}
+ var x=cv.getContext('2d'),W=0,H=0,geo=null,B1=null,B2=null,IM=null,iw=0,ih=0,P=[],vis=true,raf=0,last=0,mob=false,SP={},T0=performance.now();
+ function vn(seed){var a=[];for(var i=0;i<512;i++)a.push(Math.random());return function(v){v=v*1;var i=Math.floor(v),f=v-i,u=f*f*(3-2*f);return a[(i%512+512)%512]*(1-u)+a[((i+1)%512+512)%512]*u;};}
+ function sm(a,b,v){var t=Math.max(0,Math.min(1,(v-a)/(b-a)));return t*t*(3-2*t);}
+ // ortak geometri: huzmenin her yükseklikteki merkezi ve yarı genişliği
+ function at(t){return [geo.x0+(geo.x1-geo.x0)*t,geo.w0+(geo.w1-geo.w0)*t];}
+ // ışık yoğunluğu haritası (yarım çözünürlük) ve iki şerit katmanı (yavaşça birbirine geçer)
+ function build(){var s=mob?.5:.5;iw=Math.max(2,Math.round(W*s));ih=Math.max(2,Math.round(H*s));IM=new Float32Array(iw*ih);
+   var n1=vn(),n2=vn(),n3=vn(),n4=vn(),fade=mob?.26:.05;
+   function layer(phase){var c=document.createElement('canvas');c.width=iw;c.height=ih;var g=c.getContext('2d'),img=g.createImageData(iw,ih),d=img.data;
+     for(var j=0;j<ih;j++){var t=j/ih,a=at(t),cx=a[0]*s,hw=a[1]*s,pen=.18+.5*t;
+       for(var i=0;i<iw;i++){var u=(i-cx)/hw,au=Math.abs(u);if(au>1+pen){continue;}
+         var edge=sm(1+pen,1-pen*.6,au),
+             mul=1-.5*Math.exp(-Math.pow((u+.05)/(.045+.05*t),2)),                                   // pencere kayıtının gölgesi
+             str=.62+.28*n1(u*7+phase*3)+.18*n2(u*26-phase*5)+.1*n3(u*61),                            // boyuna ışık şeritleri
+             haze=.78+.22*n4(u*2.2+t*3.4+phase*2),                                                   // havadaki toz yoğunluğu
+             along=(.55+.45*(1-t))*sm(0,fade,t)*(1-.35*sm(.75,1,t)),
+             I=edge*mul*str*haze*along,k=(j*iw+i)*4;
+         d[k]=255;d[k+1]=Math.round(232+10*(1-t));d[k+2]=Math.round(192+18*(1-t));d[k+3]=Math.min(255,Math.round(255*I*(mob?.44:.4)));
+         if(!phase)IM[j*iw+i]=I;}}
+     g.putImageData(img,0,0);return c;}
+   B1=layer(0);B2=layer(.37);}
+ function inten(px,py){var i=Math.round(px*iw/W),j=Math.round(py*ih/H);if(i<0||j<0||i>=iw||j>=ih)return 0;return IM[j*iw+i];}
+ // zerre görüntüleri: keskin nokta, yumuşak bulanık disk (kenarı hafif parlak), ince lif
+ function spr(){if(SP.a)return;function mk(f){var c=document.createElement('canvas');c.width=c.height=64;f(c.getContext('2d'));return c;}
+   SP.a=mk(function(c){var g=c.createRadialGradient(32,32,0,32,32,32);g.addColorStop(0,'rgba(255,248,226,1)');g.addColorStop(.12,'rgba(255,244,214,.9)');g.addColorStop(.3,'rgba(255,236,196,.25)');g.addColorStop(1,'rgba(255,230,190,0)');c.fillStyle=g;c.fillRect(0,0,64,64);});
+   SP.b=mk(function(c){var g=c.createRadialGradient(32,32,0,32,32,30);g.addColorStop(0,'rgba(255,240,205,.32)');g.addColorStop(.78,'rgba(255,240,205,.42)');g.addColorStop(.9,'rgba(255,244,215,.55)');g.addColorStop(1,'rgba(255,240,205,0)');c.fillStyle=g;c.beginPath();c.arc(32,32,30,0,7);c.fill();});
+   SP.f=mk(function(c){c.strokeStyle='rgba(255,246,222,.9)';c.lineWidth=1.4;c.lineCap='round';c.beginPath();c.moveTo(14,36);c.bezierCurveTo(24,22,38,44,50,28);c.stroke();});}
+ function spawn(any){var t=Math.random(),a=at(t),z=Math.random(),r=Math.random();
+   return {x:a[0]+(Math.random()*2-1)*a[1]*1.1,y:any?t*H:-10-Math.random()*40,z:z,s:.5+Math.random()*1.3,fib:r<.05,flake:r<.4,rot:Math.random()*6,wr:(Math.random()-.5)*3,ph:Math.random()*100};}
+ function seed(){var n=mob?90:230;P=[];for(var i=0;i<n;i++)P.push(spawn(true));}
  function size(){W=st.clientWidth;H=st.clientHeight;if(!W||!H)return;cv.width=W;cv.height=H;mob=W<980;
-   // huzme: üstte dar, kitaba doğru genişler; kitap masaüstünde sağda, telefonda ortada
-   geo=mob?{x0:.30*W,x1:.56*W,w0:.07*W,w1:.2*W}:{x0:.56*W,x1:.75*W,w0:.045*W,w1:.12*W};
-   beam=document.createElement('canvas');beam.width=W;beam.height=H;var b=beam.getContext('2d');
-   // yumuşak kenar: genişleyen, giderek saydamlaşan katmanlar
-   for(var k=0;k<14;k++){var e=1+k*.09,a=.016*(1-k/16);b.beginPath();b.moveTo(geo.x0-geo.w0*e,-10);b.lineTo(geo.x0+geo.w0*e,-10);b.lineTo(geo.x1+geo.w1*e,H);b.lineTo(geo.x1-geo.w1*e,H);b.closePath();
-     var g=b.createLinearGradient(0,0,0,H);g.addColorStop(0,'rgba(255,238,200,'+(a*1.4)+')');g.addColorStop(.7,'rgba(255,232,190,'+a+')');g.addColorStop(1,'rgba(255,232,190,'+(a*.5)+')');b.fillStyle=g;b.fill();}
-   // huzmenin içinde ince ışık şeritleri
-   for(k=0;k<5;k++){var o=(k/4-.5)*1.4+(Math.random()-.5)*.2,ww=.12+Math.random()*.14;b.beginPath();b.moveTo(geo.x0+geo.w0*o-geo.w0*ww,-10);b.lineTo(geo.x0+geo.w0*o+geo.w0*ww,-10);b.lineTo(geo.x1+geo.w1*o+geo.w1*ww*1.3,H);b.lineTo(geo.x1+geo.w1*o-geo.w1*ww*1.3,H);b.closePath();b.fillStyle='rgba(255,240,205,.022)';b.fill();}
-   // kitabın üstüne düşen sıcak ışık
-   var px=mob?.54*W:.74*W,py=mob?.6*H:.58*H,pr=(mob?.4:.22)*W,pg=b.createRadialGradient(px,py,0,px,py,pr);pg.addColorStop(0,'rgba(255,226,170,.10)');pg.addColorStop(1,'rgba(255,226,170,0)');b.fillStyle=pg;b.fillRect(0,0,W,H);
-   // üst kenarda yumuşak başlangıç (telefonda sahne metnin altından başlar)
-   b.globalCompositeOperation='destination-in';var vf=b.createLinearGradient(0,0,0,H);vf.addColorStop(0,'rgba(0,0,0,0)');vf.addColorStop(mob?.3:.08,'rgba(0,0,0,1)');vf.addColorStop(1,'rgba(0,0,0,1)');b.fillStyle=vf;b.fillRect(0,0,W,H);b.globalCompositeOperation='source-over';
-   if(!P.length)seed();draw(0);}
- function inBeam(px,py){var t=py/H,cx=geo.x0+(geo.x1-geo.x0)*t,hw=geo.w0+(geo.w1-geo.w0)*t,d=Math.abs(px-cx)/hw;return d<1?1-d*d:Math.max(0,.25-(d-1)*.6);}
- function seed(){var n=mob?45:110;P=[];for(var i=0;i<n;i++)P.push(spawn(true));}
- function spawn(any){var t=Math.random(),cx=geo.x0+(geo.x1-geo.x0)*t,hw=geo.w0+(geo.w1-geo.w0)*t,far=Math.random()<.18;
-   return {x:cx+(Math.random()*2-1)*hw*1.3,y:any?t*H:H*Math.random(),vx:0,vy:0,r:far?3+Math.random()*3:.8+Math.random()*1.6,a:far?.2:.6+Math.random()*.4,ph:Math.random()*6,f:Math.random()*.6+.4};}
- function draw(dt){if(!geo)return;x.clearRect(0,0,W,H);x.drawImage(beam,0,0);if(!sp)sp=sprite();
-   var tm=performance.now()/1000;
-   P.forEach(function(p,i){
-     // Brown hareketi + hafif hava akımı: zerreler yavaşça süzülür, ara sıra yön değiştirir
-     p.vx+=(Math.random()-.5)*6*dt-p.vx*.6*dt;p.vy+=(Math.random()-.5)*6*dt-p.vy*.6*dt+(.6*Math.sin(tm*.2+p.ph))*dt;
-     p.x+=(p.vx+2*Math.sin(tm*.13+p.ph))*dt*p.f;p.y+=(p.vy+1.2)*dt*p.f;
-     var b=inBeam(p.x,p.y);if(p.y>H+10||p.y<-10||b<=0&&Math.random()<.01){P[i]=spawn(false);P[i].y=Math.random()*H*.2;return;}
-     var tw=.75+.25*Math.sin(tm*1.7+p.ph*3),al=p.a*b*tw*Math.min(1,Math.max(0,p.y/(H*(mob?.3:.08))));if(al<.02)return;x.globalAlpha=al;var s=p.r*4;x.drawImage(sp,p.x-s/2,p.y-s/2,s,s);});
+   geo=mob?{x0:.28*W,x1:.55*W,w0:.075*W,w1:.21*W}:{x0:.55*W,x1:.75*W,w0:.05*W,w1:.13*W};build();spr();seed();draw(0);}
+ // hava akımı: yavaş, girdaplı (iki katmanlı sinüs alanı); sıcak hava hafifçe yükselir
+ function flow(px,py,tm){var k1=.006,k2=.011;return [9*Math.sin(py*k1+tm*.21)+5*Math.sin((px+py)*k2-tm*.33),-2.5+6*Math.cos(px*k1*1.3-tm*.17)+3*Math.sin(py*k2*1.7+tm*.29)];}
+ function draw(dt){if(!geo)return;var tm=(performance.now()-T0)/1000;x.clearRect(0,0,W,H);
+   // huzme: iki şerit katmanı yavaşça yer değiştirir, bulut geçer gibi yoğunluk hafifçe dalgalanır
+   var br=.88+.12*Math.sin(tm*.13)*Math.sin(tm*.071+1),mix=.5+.5*Math.sin(tm*.09);
+   x.globalAlpha=br*(1-mix*.6);x.drawImage(B1,0,0,W,H);x.globalAlpha=br*mix*.6;x.drawImage(B2,0,0,W,H);x.globalAlpha=1;
+   P.forEach(function(p,i){var f=flow(p.x,p.y,tm),dep=.45+p.z*.9;p.x+=(f[0]+Math.sin(tm*1.3+p.ph)*1.5)*dt*dep;p.y+=(f[1]+3)*dt*dep;p.rot+=p.wr*dt;
+     if(p.y>H+20||p.x<-40||p.x>W+40){P[i]=spawn(false);return;}
+     var I=inten(p.x,p.y);if(I<.03)return;
+     var blur=Math.abs(p.z-.5)*2,near=p.z>.5,sz=(near?2.2+blur*9:1.6+blur*3)*p.s,al=I*(near&&blur>.35?.35:.95)*(1-blur*.45);
+     if(p.flake)al*=.35+.65*Math.pow(Math.abs(Math.sin(p.rot)),6);                       // dönen pul ışığı yakaladıkça parlar
+     al*=.8+.2*Math.sin(tm*2.3+p.ph);if(al<.02)return;x.globalAlpha=Math.min(1,al);
+     if(p.fib&&blur<.4){x.save();x.translate(p.x,p.y);x.rotate(p.rot);x.drawImage(SP.f,-10*p.s,-10*p.s,20*p.s,20*p.s);x.restore();}
+     else if(blur>.35){x.drawImage(SP.b,p.x-sz,p.y-sz,sz*2,sz*2);}
+     else{var s2=sz*3.2;x.drawImage(SP.a,p.x-s2/2,p.y-s2/2,s2,s2);}});
    x.globalAlpha=1;}
  function loop(t){raf=0;if(!vis)return;var dt=Math.min(.05,(t-last)/1000||0);last=t;draw(dt);raf=requestAnimationFrame(loop);}
  if('ResizeObserver' in window)new ResizeObserver(size).observe(st);else addEventListener('resize',size);size();

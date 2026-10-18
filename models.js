@@ -511,7 +511,7 @@ function page(opts){opts=opts||{};var key=JSON.stringify(opts);if(_pageCache[key
   if(V){t.repeat.set(-1,1);t.offset.set(1,0);}
   _pageCache[key]=t;return t;}
 // Sayfa malzemesi: kâğıt pürüzü, altın cetvel ve tezhip ışıkta parlar
-function pageMat(t,o){o=o||{};var u=t.userData||{};return new THREE.MeshStandardMaterial({polygonOffset:o.po!=null,polygonOffsetFactor:o.po||0,polygonOffsetUnits:(o.po||0)*2,map:t,bumpMap:u.bump||null,bumpScale:.035,metalnessMap:u.metal||null,metalness:u.metal?.45:0,roughnessMap:u.rough||null,roughness:u.rough?1:.95,
+function pageMat(t,o){o=o||{};var u=t.userData||{};return new THREE.MeshStandardMaterial({map:t,bumpMap:u.bump||null,bumpScale:.035,metalnessMap:u.metal||null,metalness:u.metal?.45:0,roughnessMap:u.rough||null,roughness:u.rough?1:.95,
   emissiveMap:u.metal||null,emissive:u.metal?new THREE.Color(.26,.19,.08):new THREE.Color(0,0,0),side:o.side||THREE.FrontSide});}
 /* Sayfa kenarları: tek tek kâğıt katmanları, hafif toz */
 function edges(){var W=512,H=512,C=_cv(W,H),c=C.getContext('2d'),r=_rng(17);c.fillStyle='#E6D7B2';c.fillRect(0,0,W,H);
@@ -778,6 +778,19 @@ Viewer.prototype.project=function(){var w=this.host.clientWidth,h=this.host.clie
     o.el.style.left=((v.x+1)/2*w)+'px';o.el.style.top=((1-v.y)/2*h)+'px';var hidden=v.z>1||(n&&n.dot(d)>0)||(o.when&&!o.when());o.el.classList.toggle('hide',!!hidden);});};
 Viewer.prototype.pick=function(objs,fn){this.picks.push({objs:objs,fn:fn});};
 
+
+/* ---------- Yaprak yığını: temas fiziği ----------
+   Her yaprak, sırttaki menteşesinden çıkan eğilebilir bir şerittir (açı + hava direnci + kendi ağırlığıyla sarkma).
+   Sonra yığın kuralı uygulanır: sağ tarafta her yaprak, altındaki yaprakların ve metin bloğunun üstünde durur;
+   sol tarafta önce çevrilmiş yaprakların ve açık kapağın (ebru iç yüzü) üstüne yaslanır. Yapraklar arasında sabit
+   kâğıt kalınlığı (G) korunur; böylece hiçbir yüzey bir başkasının içine giremez ve titreşmez. */
+function _curveY(q,s){var S=q.S,Y=q.Y,best=-1e9;for(var j=0;j<S.length-1;j++){var a=S[j],b=S[j+1];if((s-a)*(s-b)<=0){var t=b===a?0:(s-a)/(b-a),y=Y[j]+(Y[j+1]-Y[j])*t;if(y>best)best=y;}}return best;}
+function layPages(P,PX,G,rightFloor,leftFloor){var n=P.length,k,i,j,f;
+  for(k=0;k<n;k++){var q=P[k];for(j=1;j<q.S.length;j++){var s=q.S[j];if(s<=PX)continue;f=rightFloor(s);for(i=0;i<k;i++)f=Math.max(f,_curveY(P[i],s));f+=G;if(q.Y[j]<f)q.Y[j]=f;}}
+  for(k=n-1;k>=0;k--){var q2=P[k];for(j=1;j<q2.S.length;j++){var s2=q2.S[j];if(s2>=PX)continue;f=leftFloor(s2);for(i=k+1;i<n;i++)f=Math.max(f,_curveY(P[i],s2));f+=G;if(q2.Y[j]<f)q2.Y[j]=f;}}}
+// serbest şerit: menteşe açısı a, açısal hız w; uç hava direncinde geride kalır, dikeye yakınken sarkar
+function stripCurve(q,PX,PY,len,SEG){var a=q.h.a,w=q.h.w,bend=Math.max(-1.2,Math.min(1.2,-w*.2)),sag=.35*Math.max(0,Math.sin(a))*Math.cos(a),ds=len/SEG,x=PX,y=PY;q.S=q.S||[];q.Y=q.Y||[];
+  for(var j=0;j<=SEG;j++){var s=j/SEG,ang=a+bend*Math.pow(s,1.5)-sag*s*s;q.S[j]=x;q.Y[j]=y;x+=Math.cos(ang)*ds;y+=Math.sin(ang)*ds;}}
 /* ---------- 3D Yazma eser (fizikli) ---------- */
 function buildBook(V){
   var W=14,Dp=20,T=3,c=.28,g=new THREE.Group();V.pivot.add(g);g.position.set(-1,0,0);
@@ -807,19 +820,16 @@ function buildBook(V){
   for(var k=0;k<NP;k++){var geo=new THREE.BufferGeometry(),vp=new Float32Array((SEG+1)*2*3),vu=new Float32Array((SEG+1)*2*2),idx=[];
     for(var j=0;j<=SEG;j++){vu[(j*2)*2]=j/SEG;vu[(j*2)*2+1]=1;vu[(j*2+1)*2]=j/SEG;vu[(j*2+1)*2+1]=0;if(j<SEG){var a=j*2;idx.push(a,a+1,a+2,a+1,a+3,a+2);}}
     geo.setAttribute('position',new THREE.BufferAttribute(vp,3));geo.setAttribute('uv',new THREE.BufferAttribute(vu,2));geo.setIndex(idx);
-    var m=new THREE.Mesh(geo,pageMat(page(k===NP-1?{serlevha:true,seed:7,p:0}:{seed:100+k*2,p:2*(NP-1-k)}),{po:(NP-1-k)}));m.castShadow=true;m.add(new THREE.Mesh(geo,pageMat(page({seed:101+k*2,verso:true,p:2*(NP-1-k)+1}),{side:THREE.BackSide,po:k})));var y0=c+T+.014+k*.012;m.position.set(-W/2+.25,y0,0);g.add(m);
-    var hi=Math.PI-.03-(NP-k)*.006;
+    var m=new THREE.Mesh(geo,pageMat(page(k===NP-1?{serlevha:true,seed:7,p:0}:{seed:100+k*2,p:2*(NP-1-k)}),{po:(NP-1-k)}));m.castShadow=true;m.add(new THREE.Mesh(geo,pageMat(page({seed:101+k*2,verso:true,p:2*(NP-1-k)+1}),{side:THREE.BackSide,po:k})));var y0=c+T+.012;m.position.set(-W/2+.25,y0,0);g.add(m);
+    var hi=Math.PI-.004-(NP-k)*.003;
     pages.push({m:m,geo:geo,y0:y0,k:k,h:new Hinge({a:0,lo:0,hi:hi,G:9,f:.9,e:.18,K:34,C:10})});}
-  function shapePage(p){var a=p.h.a,w=p.h.w,arr=p.geo.attributes.position.array,x=0,y=0,ds=pw/SEG;
-    // hava direnci: hareket eden yaprağın ucu geride kalır; kâğıt kendi ağırlığıyla dikeye yakınken sarkar
-    var bend=Math.max(-1.2,Math.min(1.2,-w*.2)),sag=.35*Math.max(0,Math.sin(a))*Math.cos(a);
-    for(var j=0;j<=SEG;j++){var s=j/SEG,ang=a+bend*Math.pow(s,1.5)-sag*s*s;
-      arr[(j*2)*3]=x;arr[(j*2)*3+1]=y;arr[(j*2)*3+2]=-pd/2;arr[(j*2+1)*3]=x;arr[(j*2+1)*3+1]=y;arr[(j*2+1)*3+2]=pd/2;
-      x+=Math.cos(ang)*ds;y+=Math.sin(ang)*ds;if(a<.02&&y<0)y=0;}
-    p.geo.attributes.position.needsUpdate=true;p.geo.computeVertexNormals();p.geo.computeBoundingSphere();
-    // çevrilen yapraklar sol yığında ters sırayla durur: yükseklik sırası da tersine döner, yapraklar sırt yanında birbirinin içinden geçmez
-    var sf=Math.min(1,Math.max(0,(a-1.3)/1.4));sf=sf*sf*(3-2*sf);p.m.position.y=p.y0-p.k*.012+((1-sf)*p.k+sf*(pages.length-1-p.k))*.012+c*sf;}
-  pages.forEach(shapePage);
+  var PX=-W/2+.25,PY=c+T+.012,GAP=.022;
+  function shapeAll(){pages.forEach(function(q){stripCurve(q,PX,PY,pw,SEG);});
+    var hx=-W/2,hy=c+T+c,ca=Math.cos(hc.a),sa=Math.sin(hc.a);
+    layPages(pages,PX,GAP,function(){return c+T;},function(s){if(hc.a<Math.PI/2)return -1e9;if(s>=hx)return hy;var d=(s-hx)/ca;return d<=W?hy+sa*d:-1e9;});
+    pages.forEach(function(q){var arr=q.geo.attributes.position.array;for(var j=0;j<=SEG;j++){var x=q.S[j]-PX,y=q.Y[j]-PY;arr[(j*2)*3]=x;arr[(j*2)*3+1]=y;arr[(j*2)*3+2]=-pd/2;arr[(j*2+1)*3]=x;arr[(j*2+1)*3+1]=y;arr[(j*2+1)*3+2]=pd/2;}
+      q.geo.attributes.position.needsUpdate=true;q.geo.computeVertexNormals();q.geo.computeBoundingSphere();});}
+
   // Menteşeler
   var cover=new THREE.Group();
   var hc=new Hinge({a:0,lo:0,hi:Math.PI-.005,G:9,f:.55,e:.28,K:110,C:15}),hs=new Hinge({a:Math.PI/2,lo:0,hi:Math.PI/2,G:12,f:.35,e:.25}),ms=new Spring(Math.PI/2,80,.55);
@@ -841,7 +851,7 @@ function buildBook(V){
     if(ms.x>Math.PI/2){ms.x=Math.PI/2;if(ms.v>0)ms.v=-ms.v*.2;}
     pages.forEach(function(p){p.h.step(dt);});collide();
     fp.rotation.z=hc.a;sp.rotation.z=hs.a;mp.rotation.z=ms.x;
-    pages.forEach(function(p){shapePage(p);p.m.visible=hc.a>.25||p.h.a>.01;});
+    shapeAll();pages.forEach(function(p){p.m.visible=hc.a>.25||p.h.a>.01;});
     // elle bırakılan parçalar durulunca durum güncellenir (düğmeler senkron kalır)
     if(settling&&!held&&!busy&&still(hc)&&still(hs)&&Math.abs(ms.v)<.03&&pages.every(function(p){return still(p.h);})){settling=false;state=derive();done();}
   });
@@ -1377,16 +1387,19 @@ whenNear('conk3d',function(){var host=document.getElementById('conk3d');if(!host
   for(var k=0;k<NP;k++){var geo=new THREE.BufferGeometry(),vp=new Float32Array((SEG+1)*6),vu=new Float32Array((SEG+1)*4),idx=[];
     for(var j=0;j<=SEG;j++){vu[j*4]=0;vu[j*4+1]=1-j/SEG;vu[j*4+2]=1;vu[j*4+3]=1-j/SEG;if(j<SEG){var a=j*2;idx.push(a,a+2,a+1,a+1,a+2,a+3);}}
     geo.setAttribute('position',new THREE.BufferAttribute(vp,3));geo.setAttribute('uv',new THREE.BufferAttribute(vu,2));geo.setIndex(idx);
-    var m=new THREE.Mesh(geo,k===NP-1?pM:new THREE.MeshStandardMaterial({map:conkPage(k+2),roughness:.95,side:THREE.DoubleSide}));m.castShadow=true;var y0=c+T+.014+k*.012;m.position.set(0,y0,ZH+.2);g.add(m);
-    pages.push({m:m,geo:geo,y0:y0,k:k,h:new Hinge({a:0,lo:0,hi:Math.PI-.03-(NP-k)*.006,G:9,f:.9,e:.18,K:34,C:10})});}
-  function shape(p){var a=p.h.a,w=p.h.w,arr=p.geo.attributes.position.array,y=0,z=0,ds=pl/SEG,bend=Math.max(-1.2,Math.min(1.2,-w*.2)),sag=.35*Math.max(0,Math.sin(a))*Math.cos(a);
-    for(var j=0;j<=SEG;j++){var s=j/SEG,an=a+bend*Math.pow(s,1.5)-sag*s*s;arr[j*6]=-pw/2;arr[j*6+1]=y;arr[j*6+2]=z;arr[j*6+3]=pw/2;arr[j*6+4]=y;arr[j*6+5]=z;y+=Math.sin(an)*ds;z+=Math.cos(an)*ds;if(a<.02&&y<0)y=0;}
-    p.geo.attributes.position.needsUpdate=true;p.geo.computeVertexNormals();p.geo.computeBoundingSphere();var sf=Math.min(1,Math.max(0,(a-1.3)/1.4));sf=sf*sf*(3-2*sf);p.m.position.y=p.y0-p.k*.012+((1-sf)*p.k+sf*(pages.length-1-p.k))*.012+c*sf;}
+    var m=new THREE.Mesh(geo,k===NP-1?pM:new THREE.MeshStandardMaterial({map:conkPage(k+2),roughness:.95,side:THREE.DoubleSide}));m.castShadow=true;var y0=c+T+.012;m.position.set(0,y0,ZH+.2);g.add(m);
+    pages.push({m:m,geo:geo,y0:y0,k:k,h:new Hinge({a:0,lo:0,hi:Math.PI-.004-(NP-k)*.003,G:9,f:.9,e:.18,K:34,C:10})});}
+  var PZ=ZH+.2,PY0=c+T+.012,GAP=.022;
+  function shapeAll(){pages.forEach(function(q){stripCurve(q,PZ,PY0,pl,SEG);});
+    var hz=ZH,hy=c+T+c,ca=Math.cos(hc.a),sa=Math.sin(hc.a);
+    layPages(pages,PZ,GAP,function(){return c+T;},function(s){if(hc.a<Math.PI/2)return -1e9;if(s>=hz)return hy;var d=(s-hz)/ca;return d<=BL?hy+sa*d:-1e9;});
+    pages.forEach(function(q){var arr=q.geo.attributes.position.array;for(var j=0;j<=SEG;j++){var z=q.S[j]-PZ,y=q.Y[j]-PY0;arr[j*6]=-pw/2;arr[j*6+1]=y;arr[j*6+2]=z;arr[j*6+3]=pw/2;arr[j*6+4]=y;arr[j*6+5]=z;}
+      q.geo.attributes.position.needsUpdate=true;q.geo.computeVertexNormals();q.geo.computeBoundingSphere();});}
   var hc=new Hinge({a:0,lo:0,hi:Math.PI-.005,G:9,f:.55,e:.28,K:110,C:15}),held=null;
   var chain=pages.map(function(p){return {h:p.h,m:1};}).concat([{h:hc,m:4}]);
   V.updaters.push(function(dt){hc.step(dt);pages.forEach(function(p){p.h.step(dt);});
     for(var it=0;it<3;it++)for(var i=0;i<chain.length-1;i++){var A=chain[i],B=chain[i+1];if(A.h.a<=B.h.a)continue;var mA=A.h===held?1e6:A.m,mB=B.h===held?1e6:B.m,a=(A.h.a*mA+B.h.a*mB)/(mA+mB),w=(A.h.w*mA+B.h.w*mB)/(mA+mB);A.h.a=Math.min(A.h.hi,a);B.h.a=Math.max(B.h.lo,a);A.h.w=B.h.w=w;}
-    fp.rotation.x=-hc.a;pages.forEach(function(p){shape(p);p.m.visible=hc.a>.25||p.h.a>.01;});});
+    fp.rotation.x=-hc.a;shapeAll();pages.forEach(function(p){p.m.visible=hc.a>.25||p.h.a>.01;});});
   function holdH(h,py,pz,K,C,onClick){var K0=h.K,C0=h.C;held=h;h.K=K;h.C=C;h.rel=null;h.motor=h.a;
     return {move:function(r){var p=hitPlane(r,g,'x',0);if(!p)return;var a=Math.atan2(p.y-py,p.z-pz);if(a<0)a=a<-Math.PI/2?Math.PI:0;h.motor=Math.max(h.lo,Math.min(h.hi,a));},
       up:function(click){held=null;h.K=K0;h.C=C0;h.motor=null;if(Math.abs(h.a-Math.PI/2)<.12&&Math.abs(h.w)<.4)h.w=h.a>Math.PI/2?.5:-.5;if(click&&onClick)onClick();}};}
